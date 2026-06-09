@@ -33,6 +33,10 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     // 태그별 검색
     List<Book> findByTagsContaining(String tags);
 
+    List<Book> findByTitleAndAuthor(String title, String Author);
+
+    boolean existsByTitleAndAuthor(String title, String author);
+
     // 전체 검색
     @Query("SELECT b FROM Book b WHERE " +
             "b.title LIKE %:keyword% OR " +

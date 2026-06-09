@@ -74,4 +74,34 @@ public class BookController {
         }
         return bookService.search(keyword != null ? keyword : "");
     }
+
+    @GetMapping("/search/title")
+    public List<Book> searchByTitle(@RequestParam String title) {
+        return bookService.searchByTitle(title);
+    }
+
+    @GetMapping("/search/author")
+    public List<Book> searchByAuthor(@RequestParam String author) {
+        return bookService.searchByAuthor(author);
+    }
+
+    @GetMapping("/search/publisher")
+    public List<Book> searchByPublisher(@RequestParam String publisher) {
+        return bookService.searchByPublisher(publisher);
+    }
+
+    @GetMapping("/search/content")
+    public List<Book> searchByContent(@RequestParam String content) {
+        return bookService.searchByContent(content);
+    }
+
+    @GetMapping("/search/tags")
+    public List<Book> searchByTags(@RequestParam String tags) {
+        return bookService.searchByTags(tags);
+    }
+
+    @GetMapping("/search/keyword")
+    public List<Book> searchByKeyword(@RequestParam String keyword) {
+        return bookService.searchByKeyword(keyword);
+    }
 }

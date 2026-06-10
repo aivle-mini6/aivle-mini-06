@@ -21,7 +21,6 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private Long expiration;
 
-    // 토큰 생성
     public String createToken(User user) {
         Date now = new Date();
         Date expiredDate = new Date(now.getTime() + expiration);
@@ -63,5 +62,20 @@ public class JwtUtil {
     private SecretKey getSigningKey() {
         byte[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    // 토큰으로 부터 닉네임을 가져옴
+    public String getNicknameFromToken(String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return claims.get("nickname", String.class);
     }
 }

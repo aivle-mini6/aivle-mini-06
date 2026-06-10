@@ -158,4 +158,18 @@ public class BookService {
     public List<Book> searchByKeyword (String keyword) {
         return bookRepository.findByKeyword(keyword);
     }
+
+    @Transactional
+    public Book like(Long id){
+        Book book = findById(id);
+
+        Integer currentlikecount = book.getLikeCount();
+
+        if(currentlikecount == null){
+            currentlikecount = 0;
+        }
+
+        book.setLikeCount(currentlikecount + 1);
+        return bookRepository.save(book);
+    }
 }

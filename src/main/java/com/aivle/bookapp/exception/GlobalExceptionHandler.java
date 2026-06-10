@@ -16,6 +16,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
     }
 
+    // 교안 p.178: 유저 없음 -> 404 에러 응답
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleUserNotFound(UserNotFoundException e) {
+        return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
+    }
+
     // 교안 p.178: @Valid 검증 실패 -> 400 에러 응답
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValid(MethodArgumentNotValidException e) {

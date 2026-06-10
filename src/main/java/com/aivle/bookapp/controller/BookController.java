@@ -114,4 +114,8 @@ public class BookController {
                 .map(BookResponse::from)
                 .toList();
     }
+    @PatchMapping("/{id}/like")
+    public BookResponse like(@PathVariable Long id){
+        return BookResponse.from(bookService.like(id));
+    }
 }

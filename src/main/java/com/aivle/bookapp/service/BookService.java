@@ -51,8 +51,12 @@ public class BookService {
 
     // 교안 p.166: PATCH 부분 수정 비즈니스 로직
     @Transactional
-    public Book update(Long id, Book book) {
+    public Book update(Long id, Book book, String loginUserId) {
         Book existing = findById(id);
+
+        if (!existing.getAuthor().equals(loginUserId)) {
+            throw new IllegalArgumentException("자신이 등록한 책만 수정할 수 있습니다.");
+        }
         
         if (book.getTitle() != null) {
             existing.setTitle(book.getTitle());
@@ -89,10 +93,17 @@ public class BookService {
 
     // 교안 p.167: DELETE 삭제 비즈니스 로직
     @Transactional
-    public void delete(Long id) {
+    public void delete(Long id, String loginUserId) {
+        Book existing = findById(id);
+
         if (!bookRepository.existsById(id)) {
             throw new BookNotFoundException(id);
         }
+
+        if (!existing.getAuthor().equals(loginUserId)) {
+            throw new IllegalArgumentException("자신이 등록한 책만 삭제할 수 있습니다.");
+        }
+
         bookRepository.deleteById(id);
     }
 

@@ -39,10 +39,10 @@ public class SecurityConfig {
                         }
                 ))
 
-                .authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/users/register", "/users/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/books/**").permitAll()
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/users/register", "/users/login", "/users/refresh").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/books/**").permitAll()
                         .anyRequest().authenticated()
                 )
 

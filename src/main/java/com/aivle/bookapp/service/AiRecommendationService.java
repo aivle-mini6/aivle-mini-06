@@ -153,7 +153,7 @@ public class AiRecommendationService implements ApplicationRunner {
 
 
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("AI 추천 서비스 실패", e);
         }
     }
 }

@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 public class AiRecommendationService implements ApplicationRunner {
     private final BookRepository bookRepository;
     private final AiRecommendationRepository aiRecommendationRepository;
-    @Value("${openai.api.key}")
+    @Value("${openai.api.key:}")
     private String apiKey;
 
     @Override

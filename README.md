@@ -1,37 +1,63 @@
-# 도서 관리 시스템 백엔드 (miniproject05)
-KT 에이블스쿨 9기 미니프로젝트 5차 백엔드 저장소입니다.  
-본 프로젝트는 React 프론트엔드 애플리케이션과 연동하여 동작하는 **Spring Boot 4.0.6 기반의 도서 관리 백엔드 API 서버**입니다. JWT 기반의 사용자 인증 및 마이페이지 프로필 관리, 도서 추천(AI), 그리고 도서/댓글 관련 풍부한 커뮤니티 기능을 제공합니다.
+# AivleBooks (창작 서재 관리 서비스)
+KT 에이블스쿨 9기 미니프로젝트 5차 백엔드/프론트엔드 통합 저장소입니다.
+
+> **"글과 AI 표지 시안을 함께 관리하는 나만의 창작 서재"**  
+> 본 프로젝트는 사용자가 작성한 도서의 메타데이터와 본문 글을 관리하고, OpenAI의 DALL-E (IMAGE API)를 연동하여 책 내용에 어울리는 표지 시안을 생성·보관하는 통합 웹 서비스입니다. 
+> React 프론트엔드 애플리케이션과 Spring Boot 백엔드 API 서버가 유기적으로 통신하여 완결성 높은 시스템을 구성합니다.
 
 ---
 
 ## 기술 스택 (Tech Stack)
 
-* **언어 및 런타임**: Java 17
-* **프레임워크**: Spring Boot 4.0.6
-* **데이터베이스**: H2 Database (로컬 파일 저장 모드: `jdbc:h2:file:~/bookdb`)
+### 1. Frontend
+* **Framework & Build**: React, Vite
+* **HTTP Client**: Axios
+* **Styling (CSS)**: Vanilla CSS
+
+### 2. Backend & Database
+* **Framework & Tooling**: Spring Boot 4.0.6, Gradle
+* **Language**: Java 17
+* **Database**: H2 Database (로컬 파일 저장 모드: `jdbc:h2:file:~/bookdb`)
 * **ORM**: Spring Data JPA & Hibernate
-* **보안 및 인증**: Spring Security, JWT (Json Web Token)
-* **비밀번호 암호화**: BCrypt (BCryptPasswordEncoder)
-* **의존성 & 유틸리티**: Lombok, Spring Boot Validation, RestClient (OpenAI 연동)
+* **Security & Auth**: Spring Security, JWT (Json Web Token), BCrypt 비밀번호 암호화
+* **Utilities**: Lombok, Spring Boot Validation, OpenAI RestClient 연동
 
 ---
 
-## 프로젝트 아키텍처 (Layered Architecture)
+## 프로젝트 아키텍처 및 서비스 흐름 (Architecture & Flow)
 
-본 프로젝트는 유지보수성과 관심사 분리를 극대화하기 위해 **계층형 아키텍처(Layered Architecture)**를 채택하고 있습니다.
+### 1. 백엔드 계층형 구조 (Layered Architecture)
+* **Controller (표현 계층)**: HTTP 요청 수신, API 라우팅, CORS 설정 및 `@RestControllerAdvice`를 통한 글로벌 예외 제어
+* **Service (비즈니스 계층)**: 도메인의 흐름 제어, 핵심 비즈니스 로직 처리 및 `@Transactional` 단위 설정
+* **Repository (데이터 액세스 계층)**: Spring Data JPA 인터페이스(`JpaRepository`)를 활용한 DB CRUD 및 쿼리 메서드 정의
+* **Domain (엔티티 계층)**: 데이터베이스 테이블 매핑용 영속성 객체 정의 및 JPA 관계성 구성
 
-* **Controller (표현 계층)**: HTTP 요청을 수신하고 엔드포인트를 매핑합니다. DTO와의 상호 변환 및 `@RestControllerAdvice`를 통한 글로벌 예외 제어를 담당합니다.
-* **Service (비즈니스 로직 계층)**: 도메인의 흐름을 제어하고 핵심적인 비즈니스 로직을 처리합니다. `@Transactional` 어노테이션으로 DB 트랜잭션의 단위를 설정합니다.
-* **Repository (데이터 액세스 계층)**: Spring Data JPA 인터페이스(`JpaRepository`)를 상속하여 DB CRUD 및 검색 쿼리를 처리합니다.
-* **Domain (도메인/엔티티 계층)**: JPA 엔티티 정의 및 데이터 무결성을 위한 제약 조건 설정, 영속성 엔티티 객체의 관계 매핑을 구성합니다.
-* **Exception (예외 처리 계층)**: 컨트롤러 단에서 발생하는 에러를 캐치하여 사용자 정의 메세지와 일관된 HTTP 상태 코드로 응답하도록 핸들링합니다.
+### 2. 서비스 페이지 흐름도 (Service Flow Diagram)
+```mermaid
+graph TD
+    StartPage[StartPage: 홈 화면] -->|도서 목록 바로가기| BookList[BookList: 도서 목록]
+    StartPage -->|새 도서 등록 바로가기| BookCreate[BookCreate: 도서 등록]
+    StartPage -->|도서 카드 클릭| BookDetail[BookDetail: 도서 상세]
+    
+    BookList -->|도서 카드 클릭| BookDetail
+    BookList -->|새 도서 등록| BookCreate
+    BookList -->|로고 클릭| StartPage
+    BookList -->|검색 필터 선택 및 실시간 검색| BookList
+    BookList -->|페이지네이션 이동| BookList
 
----
+    BookDetail -->|수정| BookUpdate[BookUpdate: 도서 수정]
+    BookDetail -->|삭제: DELETE /books/:id| BookList
+    BookDetail -->|AI 표지 생성| CoverUpdate[CoverUpdate: AI 표지 생성]
 
-## 데이터베이스 모델링 (ERD)
+    BookUpdate -->|수정 완료 및 태그 갱신: PATCH /books/:id| BookDetail
+    BookCreate -->|등록 완료 및 태그 추출: POST /books| BookDetail
 
-Mermaid로 구성된 관계형 데이터베이스의 엔티티 구조입니다. 사용자(users), 도서(book), 도서 좋아요(likes), AI 추천(ai_recommendation), 댓글(comment) 및 댓글 좋아요(comment_like) 엔티티가 유기적으로 매핑되어 있습니다.
+    CoverUpdate -->|생성: OpenAI API| OpenAI[OpenAI Image API]
+    OpenAI -->|Base64 이미지 반환| CoverUpdate
+    CoverUpdate -->|표지 저장: PATCH /books/:id/cover| BookDetail
+```
 
+### 3. 데이터베이스 모델링 (ERD)
 ```mermaid
 erDiagram
     users {
@@ -95,82 +121,117 @@ erDiagram
 
 ---
 
-## API 명세서 (API Specification)
-
-> **인증 정보 설정**: 인증이 필요한 엔드포인트(`O`)는 반드시 요청 헤더에 `Authorization: Bearer <JWT_ACCESS_TOKEN>` 형식을 포함해야 합니다.
-
-### 1. 사용자 및 인증 API (`/users`)
-
-| HTTP Method | Endpoint | 인증 필요 | 기능 설명 | Request Payload | Response Payload |
-| :--- | :--- | :---: | :--- | :--- | :--- |
-| **POST** | `/users/register` | X | 신규 회원가입 (비밀번호 BCrypt 암호화 저장) | `{ "userId": "id", "password": "pw", "name": "이름", "email": "이메일", "nickname": "닉네임" }` | **201 Created**<br>`{ "userId": "id", "name": "이름", "email": "이메일", "nickname": "닉네임" }` |
-| **POST** | `/users/login` | X | 로그인 (JWT 발급 및 DB Refresh Token 갱신) | `{ "userId": "id", "password": "pw" }` | **200 OK**<br>`{ "accessToken": "...", "refreshToken": "...", "userId": "id", "nickname": "닉네임" }` |
-| **POST** | `/users/refresh` | X | Access Token 갱신 | `{ "refreshToken": "..." }` | **200 OK**<br>`{ "accessToken": "..." }` |
-| **GET** | `/users/me` | O | 내 프로필 정보 조회 (마이페이지) | 없음 (Authorization 헤더) | **200 OK**<br>`{ "userId": "id", "name": "이름", "email": "이메일", "nickname": "닉네임" }` |
-| **PATCH** | `/users/me` | O | 내 프로필 정보 수정 (신규 토큰 재발급) | `{ "nickname": "닉네임", "email": "이메일", "oldPassword": "기존비밀번호", "newPassword": "새비밀번호" }` (모두 선택) | **200 OK**<br>`{ "userId": "id", "name": "이름", "email": "이메일", "nickname": "닉네임", "accessToken": "...", "refreshToken": "..." }` |
-| **POST** | `/users/logout` | O | 로그아웃 (DB의 Refresh Token 삭제 및 SecurityContext 즉시 비우기) | 없음 (Authorization 헤더) | **200 OK** (Body 없음) |
-
-### 2. 도서 API (`/books`)
-
-| HTTP Method | Endpoint | 인증 필요 | 기능 설명 | Request Parameters / Payload | Response Payload |
-| :--- | :--- | :---: | :--- | :--- | :--- |
-| **GET** | `/books` | X | 도서 목록 검색 및 페이징 조회 | **Query String**:<br>- `searchType` (all, title, author, publisher, content, tags, keyword)<br>- `keyWord` (검색어)<br>- `sortBy` (time, 인기순 등 정렬기준)<br>- `order` (asc, desc)<br>- `page` (페이지 번호, 1부터 시작) | **200 OK**<br>`{ "content": [ { "id": 1, "title": "도서명", "author": { "userId": "id", "nickName": "닉네임" }, "publisher": "출판사", "content": "내용", "tags": "태그", "coverImageUrl": "...", "likeCount": 0, "createdAt": "...", "updatedAt": "..." } ], "totalPages": 1, "currentPage": 1 }` |
-| **GET** | `/books/{id}` | X | 도서 단건 상세 조회 | 없음 | **200 OK**<br>`{ "id": 1, "title": "도서명", "author": { "userId": "id", "nickName": "닉네임" }, ... }` |
-| **GET** | `/books/new` | X | 최신 등록 도서 3권 조회 | 없음 | **200 OK**<br>`[ { "id": 1, "title": "도서명", ... } ]` |
-| **GET** | `/books/popular` | X | 인기 도서 3권 조회 | 없음 | **200 OK**<br>`[ { "id": 1, "title": "도서명", ... } ]` |
-| **POST** | `/books` | X* | 도서 신규 생성 (Spring Security 허용 상태) | `{ "title": "제목", "author": { "userId": "사용자ID" }, "publisher": "출판사", "content": "내용", "tags": "태그", "coverImageUrl": "..." }` | **201 Created**<br>`{ "id": 1, "title": "도서명", ... }` |
-| **PATCH** | `/books/{id}` | O | 도서 부분 수정 (본인 작성 글만 허용) | `{ "title": "수정제목", "publisher": "수정출판사", "content": "수정내용", "tags": "수정태그", "coverImageUrl": "...", "author": { "userId": "사용자ID" } }` (author 필수) | **200 OK**<br>`{ "id": 1, "title": "수정제목", ... }` |
-| **DELETE** | `/books/{id}` | O | 도서 삭제 (본인 작성 글만 허용) | 없음 | **204 No Content** (Body 없음) |
-| **PATCH** | `/books/{id}/cover` | O | AI 추천 표지 이미지 저장 | `{ "coverImageUrl": "..." }` | **200 OK**<br>`{ "id": 1, "coverImageUrl": "...", ... }` |
-| **POST** | `/books/{id}/like` | O | 도서 좋아요 등록 및 취소 토글 | `{ "userId": "사용자ID" }` | **200 OK**<br>`{ "id": 1, "likeCount": 1, ... }` |
-| **GET** | `/books/ai-recommendation` | X | 캐시된 AI 이번 달 추천 도서 조회 | 없음 | **200 OK**<br>`{ "id": 1, "title": "도서명", "content": "내용", "author": { "userId": "id", ... }, "publisher": "...", "coverImageUrl": "...", "reason": "AI 추천사유" }` |
-
-### 3. 댓글 API (`/books/{bookId}/comments`)
-
-| HTTP Method | Endpoint | 인증 필요 | 기능 설명 | Request Parameters / Payload | Response Payload |
-| :--- | :--- | :---: | :--- | :--- | :--- |
-| **GET** | `/books/{bookId}/comments` | X | 해당 도서의 댓글 목록 조회 | **Query String**:<br>- `sort` (likes, createdAt) (기본값: likes) | **200 OK**<br>`[ { "id": 1, "content": "댓글내용", "createdAt": "yyyy-MM-dd HH:mm:ss", "nickname": "닉네임", "userId": "아이디", "likeCount": 0 } ]` |
-| **POST** | `/books/{bookId}/comments` | O | 댓글 등록 | `{ "content": "댓글 작성 내용" }` | **200 OK**<br>`"댓글이 성공적으로 등록되었습니다."` |
-| **DELETE** | `/books/{bookId}/comments/{commentId}` | O | 댓글 삭제 (본인 작성 글만 허용) | 없음 | **200 OK**<br>`"댓글이 성공적으로 삭제되었습니다."` |
-| **POST** | `/books/{bookId}/comments/{commentId}/like` | O | 댓글 좋아요 토글 (해당 댓글 추천/취소) | 없음 | **200 OK**<br>`{ "liked": true, "message": "좋아요를 눌렀습니다." }` <br>또는 `{ "liked": false, "message": "좋아요를 취소했습니다." }` |
-
----
-
-## 로컬 실행 및 설정 가이드
+## 로컬 실행 및 설정 가이드 (Getting Started)
 
 ### 1. 환경 설정 (Configuration)
-`src/main/resources/application.yml` 파일에서 데이터베이스 및 JWT, 외부 API 키(AI 추천 연동 시 필수) 설정을 조율합니다.
-
+`src/main/resources/application.yml` 파일에서 데이터베이스 및 JWT 설정을 확인합니다.
 ```yaml
 spring:
   datasource:
     driver-class-name: org.h2.Driver
-    url: jdbc:h2:file:~/bookdb;  # 로컬 파일 모드 저장
+    url: jdbc:h2:file:~/bookdb;  # 로컬 H2 파일 모드
     username: sa
     password: 1234
   h2:
     console:
       enabled: true
-      path: /h2-console          # H2 콘솔 접근 경로
-
+      path: /h2-console
 jwt:
   secret: aivle-bookapp-jwt-secret-key-2026!
-  access-expiration: 10800000    # 3시간 (밀리초)
-  refresh-expiration: 86400000   # 24시간 (밀리초)
+  access-expiration: 3600000    # 1시간
+  refresh-expiration: 86400000   # 24시간
 ```
 
-### 2. 의존성 빌드 및 로컬 구동 방법
-서버 구동을 완료하면 API 기본 포트는 `8080`으로 실행됩니다.
-
-**Windows 환경 (PowerShell)**:
+### 2. 백엔드 실행 방법 (PowerShell / Terminal)
+API 기본 Endpoint 포트는 `8080`입니다.
 ```powershell
 ./gradlew.bat bootRun
 ```
-
-
-
-* **API 기본 Endpoint**: `http://localhost:8080`
 * **H2 Database Console**: `http://localhost:8080/h2-console`
-  - **JDBC URL**: `jdbc:h2:file:~/bookdb`
-  - **User Name**: `sa`
-  - **Password**: `1234`
+  - JDBC URL: `jdbc:h2:file:~/bookdb`
+  - User Name: `sa` / Password: `1234`
+
+### 3. 프론트엔드 실행 방법
+프론트엔드 소스 디렉토리에서 아래 명령어로 리액트 개발 서버를 시작합니다.
+```bash
+npm install
+npm run dev
+```
+* 로컬 접속 URL: `http://localhost:5173`
+
+---
+
+## API 명세서 (API Specification)
+
+> **인증 권한 안내**: 인증 필수가 `O`인 API는 요청 헤더에 `Authorization: Bearer <JWT_ACCESS_TOKEN>`을 실어 전송해야 합니다.
+
+### 1. 사용자 및 인증 API (`/users`)
+| HTTP Method | Endpoint | 인증 필요 | 기능 설명 | Request Payload | Response Payload |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| **POST** | `/users/register` | X | 신규 회원가입 (BCrypt 암호화 저장) | `{ "userId": "id", "password": "pw", "name": "이름", "email": "이메일", "nickname": "닉네임" }` | **201 Created**<br>`{ "userId": "id", "name": "이름", ... }` |
+| **POST** | `/users/login` | X | 로그인 (JWT 발급 및 DB Refresh Token 등록) | `{ "userId": "id", "password": "pw" }` | **200 OK**<br>`{ "accessToken": "...", "refreshToken": "...", "userId": "id", "nickname": "닉네임" }` |
+| **POST** | `/users/refresh` | X | Access Token 만료 시 갱신 | `{ "refreshToken": "..." }` | **200 OK**<br>`{ "accessToken": "..." }` |
+| **GET** | `/users/me` | O | 현재 로그인한 사용자 프로필 조회 | 없음 | **200 OK**<br>`{ "userId": "id", "name": "이름", "email": "이메일", "nickname": "닉네임" }` |
+| **PATCH** | `/users/me` | O | 프로필 정보 수정 및 새 토큰 재발급 | `{ "nickname": "닉네임", "email": "이메일", "oldPassword": "기존비밀번호", "newPassword": "새비밀번호" }` (선택) | **200 OK**<br>`{ "userId": "id", "nickname": "닉네임", "accessToken": "...", "refreshToken": "..." }` |
+
+### 2. 도서 API (`/books`)
+| HTTP Method | Endpoint | 인증 필요 | 기능 설명 | Request Params / Payload | Response Payload |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| **GET** | `/books` | X | 도서 검색 및 페이징 조회 | Query String: `searchType`, `keyWord`, `sortBy`, `order`, `page` | **200 OK**<br>`{ "content": [ { "id": 1, "title": "도서명", "author": { "userId": "id", "nickName": "닉네임" }, "publisher": "...", "likeCount": 0 } ], "totalPages": 1, "currentPage": 1 }` |
+| **GET** | `/books/{id}` | X | 도서 상세 조회 | 없음 | **200 OK**<br>`{ "id": 1, "title": "도서명", ... }` |
+| **GET** | `/books/new` | X | 신작 도서 3권 조회 | 없음 | **200 OK**<br>`[ { "id": 1, "title": "도서명", ... } ]` |
+| **GET** | `/books/popular` | X | 인기 도서 3권 조회 | 없음 | **200 OK**<br>`[ { "id": 1, "title": "도서명", ... } ]` |
+| **POST** | `/books` | X* | 도서 신규 등록 (Security 허용) | `{ "title": "제목", "author": { "userId": "id" }, "publisher": "...", "content": "..." }` | **201 Created**<br>`{ "id": 1, "title": "제목", ... }` |
+| **PATCH** | `/books/{id}` | O | 도서 정보 수정 (본인 작성 글만 허용) | `{ "title": "수정제목", "publisher": "출판사", "content": "내용", "author": { "userId": "id" } }` (author 필수) | **200 OK**<br>`{ "id": 1, "title": "수정제목", ... }` |
+| **DELETE** | `/books/{id}` | O | 도서 삭제 (본인 작성 글만 허용) | 없음 | **204 No Content** |
+| **PATCH** | `/books/{id}/cover` | O | AI 생성한 책 표지 이미지 반영 | `{ "coverImageUrl": "Base64 이미지 데이터" }` | **200 OK**<br>`{ "id": 1, "coverImageUrl": "...", ... }` |
+| **POST** | `/books/{id}/like` | O | 도서 추천 수(좋아요) 토글 | `{ "userId": "사용자ID" }` | **200 OK**<br>`{ "id": 1, "likeCount": 1, ... }` |
+| **GET** | `/books/ai-recommendation` | X | 이 달의 캐시된 AI 추천 배너 데이터 조회 | 없음 | **200 OK**<br>`{ "id": 1, "title": "도서명", "coverImageUrl": "...", "reason": "AI 추천이유" }` |
+
+### 3. 댓글 API (`/books/{bookId}/comments`)
+| HTTP Method | Endpoint | 인증 필요 | 기능 설명 | Request Payload | Response Payload |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| **GET** | `/books/{bookId}/comments` | X | 도서별 댓글 목록 조회 (정렬 지원) | Query String: `sort` (likes, createdAt) | **200 OK**<br>`[ { "id": 1, "content": "댓글내용", "createdAt": "...", "nickname": "닉네임", "userId": "아이디", "likeCount": 0 } ]` |
+| **POST** | `/books/{bookId}/comments` | O | 댓글 등록 | `{ "content": "댓글 작성 내용" }` | **200 OK**<br>`"댓글이 성공적으로 등록되었습니다."` |
+| **DELETE** | `/books/{bookId}/comments/{commentId}` | O | 댓글 삭제 (본인 작성 댓글만 허용) | 없음 | **200 OK**<br>`"댓글이 성공적으로 삭제되었습니다."` |
+| **POST** | `/books/{bookId}/comments/{commentId}/like` | O | 댓글 추천(좋아요) 토글 | 없음 | **200 OK**<br>`{ "liked": true, "message": "좋아요를 눌렀습니다." }` |
+
+---
+
+## 트러블슈팅 (Troubleshooting)
+
+### 1. CORS(Cross-Origin Resource Sharing) 에러 해소
+* **문제 현상**: React 프론트엔드(`localhost:5173`)에서 Spring Boot 백엔드(`localhost:8080`)로 비동기 요청을 보낼 때, 브라우저의 동일 출처 정책(SOP)을 위반하여 요청이 차단되는 문제 발생.
+* **해결 방법**: Spring Security 설정 파일(`SecurityConfig.java`)에 CORS 허용 환경을 명시하고, 글로벌 WebMvcConfigurer를 구성하거나 컨트롤러 레벨에 `@CrossOrigin(origins = "http://localhost:5173")` 설정을 적용하여 외부 출처의 API 접촉 문제를 해소하였습니다.
+
+### 2. 마이페이지 회원정보 수정 시 비밀번호 변경 검증 체계 강화
+* **문제 현상**: 사용자 프로필 정보 수정 시 기존 비밀번호 검증 단계를 거치지 않고 신규 비밀번호로 재인코딩 처리를 하거나, 누락된 필드로 인해 비밀번호 데이터 손상이 일어날 수 있는 취약성 발생.
+* **해결 방법**: `UserService.updateProfile` 내부에서 `newPassword` 수정 요청을 가로챌 때 `oldPassword` 입력을 강제하고, `passwordEncoder.matches(oldPassword, user.getPassword())` 검증을 수행한 후에만 `BCrypt`로 새 비밀번호를 암호화하여 저장하도록 비즈니스 검증 레이어를 보완하였습니다.
+
+### 3. 댓글 삭제 시 관련 댓글 좋아요 데이터의 외래 키 제약 위배 해결
+* **문제 현상**: 특정 댓글을 삭제하려고 할 때, 해당 댓글을 추천(좋아요)한 관계 데이터인 `CommentLike` 엔티티가 외래 키 제약 조건으로 남아 있어 `DataIntegrityViolationException` 예외가 발생하며 삭제에 실패함.
+* **해결 방법**: `CommentService.deleteComment` 에서 댓글 엔티티를 제거하기 직전에 `commentLikeRepository.deleteByCommentId(commentId)`를 선행 호출하여 관계 데이터의 무결성 충돌(외래 키 위배)을 해소한 뒤 댓글 데이터를 안전하게 삭제 처리했습니다.
+
+### 4. 로그아웃 API 호출 시 SecurityContext 인증 정보 잔존 문제 대응
+* **문제 현상**: 사용자가 로그아웃 API(`POST /users/logout`)를 호출하여 데이터베이스에 연동된 `refreshToken`을 정상적으로 null화 처리하였음에도 불구하고, 현재 실행 중인 요청 스레드 내부의 `SecurityContext` 상에 기존 유저 인증 객체가 잔존해 있는 이슈 발견.
+* **해결 방법**: `UserController.logout` 내부에 DB 리프레시 토큰 청소 로직 완료 후 `SecurityContextHolder.clearContext()`를 호출하도록 안전망을 구축하여, ThreadLocal에 상주하던 Spring Security의 인증 세션을 즉시 초기화하여 확실한 로그아웃 효과를 보장했습니다.
+
+---
+
+## 주요 구현 결과 및 화면 (Implementation Results)
+
+### 1. 메인 홈 화면 (`StartPage`)
+* **도서 큐레이션**: 추천수가 가장 많은 **인기 도서 3선**과 등록일 기준 최근에 등록된 **신작 도서 3선**을 자동으로 조회하여 화면에 노출합니다.
+
+### 2. 도서 목록 및 검색 (`BookList`)
+* **다차원 조건 검색**: 전체 검색뿐 아니라 `제목`, `작가`, `출판사`, `내용`, `태그` 등 필터 타입을 선택해 실시간 도서 필터링이 가능하며, `#` 키워드를 활용해 해시태그 기반 전용 태그 검색을 제공합니다.
+* **페이지네이션**: 한 페이지당 최대 12개의 도서를 렌더링하고 대용량 데이터 전송에 대응합니다.
+
+### 3. 상세 정보 조회 및 추천 (`BookDetail`)
+* 작가, 출판사, 본문 내용과 핵심 태그 목록, 등록일 및 최종 수정일 정보를 구조화하여 제공합니다. '추천하기' 클릭 시 토스트 메시지를 연동하여 사용자 친화적인 피드백을 전달합니다.
+
+### 4. AI 책 표지 자동 생성 (`CoverUpdate`)
+* OpenAI DALL-E 모델을 기반으로 도서 제목/저자/본문을 분석한 세로 맞춤형 고화질 책 표지 이미지를 자동 드로잉하고, 이를 Base64 데이터로 받아 데이터베이스에 직접 연동 및 렌더링합니다.
+
+### 5. 다이내믹 AI 추천 헤더 배너 (`Header`)
+* 5초 주기로 자동 슬라이딩되는 상단 롤링 배너를 제공하며, AI 큐레이션 엔진에 의해 캐싱된 추천 데이터가 있을 시 AI 추천 책 정보와 함께 감성적 큐레이션 사유(`reason`)를 홈 배너 영역에 실시간 연동합니다.

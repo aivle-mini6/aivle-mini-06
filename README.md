@@ -1,7 +1,8 @@
 # AivleBooks (창작 서재 관리 서비스)
-KT 에이블스쿨 9기 미니프로젝트 5차 백엔드/프론트엔드 통합 저장소입니다.
+**KT 에이블스쿨 9기 미니프로젝트 5차 (2반 3조)**  
+* **팀원**: 장천명, 신동준, 정찬진, 박지함, 임현수, 조용원, 박준희, 홍경표
 
-> **"글과 AI 표지 시안을 함께 관리하는 나만의 창작 서재"**  
+> **"AI와 독서를 연결하는 창작형 독서 플랫폼"**  
 > 본 프로젝트는 사용자가 작성한 도서의 메타데이터와 본문 글을 관리하고, OpenAI의 DALL-E (IMAGE API)를 연동하여 책 내용에 어울리는 표지 시안을 생성·보관하는 통합 웹 서비스입니다. 
 > React 프론트엔드 애플리케이션과 Spring Boot 백엔드 API 서버가 유기적으로 통신하여 완결성 높은 시스템을 구성합니다.
 
@@ -121,6 +122,22 @@ erDiagram
 
 ---
 
+## 설계 핵심 포인트 (Design & Implementation Points)
+
+### 1. DTO (Data Transfer Object) 활용 극대화
+* **Entity 직접 노출 방지**: 데이터베이스 물리 구조가 매핑된 JPA Entity를 클라이언트에 그대로 노출시키지 않고, 필요한 필드 데이터만 가공하여 제공해 보안 및 결합도를 낮췄습니다.
+* **요청/응답 구조의 명확성 분리**: 회원가입, 로그인, 도서 등록 및 좋아요 처리 시 필요한 매개변수를 Request/Response DTO로 독립화하여 유지보수성을 극대화했습니다.
+
+### 2. 도서 좋아요 (Likes) 정밀 토글 시스템
+* **중복 방지 설계**: 동일 유저가 같은 도서에 대해 1회를 초과하여 추천을 누를 수 없도록 `user_id`와 `book_id` 기반의 Unique Constraints를 구성했습니다.
+* **토글 프로세스**: 사용자가 추천 버튼을 재클릭할 시, 시스템 내부적으로 기존 Likes 레코드를 삭제하고 `Book.likeCount`를 차감하여 실시간으로 정량적인 인기 도서 랭킹을 관리합니다.
+
+### 3. JWT 기반 토큰 생명주기 및 필터 처리
+* **Access/Refresh Token 발급**: 로그인 성공 시 짧은 주기의 Access Token(API 요청 인증용, Authorization Bearer 탑재)과 긴 주기의 Refresh Token(DB 저장 및 대조를 통한 무인증 갱신용)을 동시에 생성 및 배포합니다.
+* **JwtAuthenticationFilter**: 들어오는 모든 요청의 헤더에서 JWT를 검증하고, 유효한 토큰일 경우 `SecurityContextHolder`에 인증 정보(`UsernamePasswordAuthenticationToken`)를 주입하여 로그인 사용자를 식별합니다.
+
+---
+
 ## 로컬 실행 및 설정 가이드 (Getting Started)
 
 ### 1. 환경 설정 (Configuration)
@@ -168,7 +185,7 @@ npm run dev
 ### 1. 사용자 및 인증 API (`/users`)
 | HTTP Method | Endpoint | 인증 필요 | 기능 설명 | Request Payload | Response Payload |
 | :--- | :--- | :---: | :--- | :--- | :--- |
-| **POST** | `/users/register` | X | 신규 회원가입 (BCrypt 암호화 저장) | `{ "userId": "id", "password": "pw", "name": "이름", "email": "이메일", "nickname": "닉네임" }` | **201 Created**<br>`{ "userId": "id", "name": "이름", ... }` |
+| **POST** | `/users/register` | X | 신규 회원가입 (이름, 아이디, 비밀번호, 이메일, 닉네임 필수값) | `{ "userId": "id", "password": "pw", "name": "이름", "email": "이메일", "nickname": "닉네임" }` | **201 Created**<br>`{ "userId": "id", "name": "이름", ... }` |
 | **POST** | `/users/login` | X | 로그인 (JWT 발급 및 DB Refresh Token 등록) | `{ "userId": "id", "password": "pw" }` | **200 OK**<br>`{ "accessToken": "...", "refreshToken": "...", "userId": "id", "nickname": "닉네임" }` |
 | **POST** | `/users/refresh` | X | Access Token 만료 시 갱신 | `{ "refreshToken": "..." }` | **200 OK**<br>`{ "accessToken": "..." }` |
 | **GET** | `/users/me` | O | 현재 로그인한 사용자 프로필 조회 | 없음 | **200 OK**<br>`{ "userId": "id", "name": "이름", "email": "이메일", "nickname": "닉네임" }` |
@@ -181,12 +198,12 @@ npm run dev
 | **GET** | `/books/{id}` | X | 도서 상세 조회 | 없음 | **200 OK**<br>`{ "id": 1, "title": "도서명", ... }` |
 | **GET** | `/books/new` | X | 신작 도서 3권 조회 | 없음 | **200 OK**<br>`[ { "id": 1, "title": "도서명", ... } ]` |
 | **GET** | `/books/popular` | X | 인기 도서 3권 조회 | 없음 | **200 OK**<br>`[ { "id": 1, "title": "도서명", ... } ]` |
-| **POST** | `/books` | X* | 도서 신규 등록 (Security 허용) | `{ "title": "제목", "author": { "userId": "id" }, "publisher": "...", "content": "..." }` | **201 Created**<br>`{ "id": 1, "title": "제목", ... }` |
+| **POST** | `/books` | X* | 도서 신규 등록 (title, content 필수값) | `{ "title": "제목", "author": { "userId": "id" }, "publisher": "...", "content": "..." }` | **201 Created**<br>`{ "id": 1, "title": "제목", ... }` |
 | **PATCH** | `/books/{id}` | O | 도서 정보 수정 (본인 작성 글만 허용) | `{ "title": "수정제목", "publisher": "출판사", "content": "내용", "author": { "userId": "id" } }` (author 필수) | **200 OK**<br>`{ "id": 1, "title": "수정제목", ... }` |
 | **DELETE** | `/books/{id}` | O | 도서 삭제 (본인 작성 글만 허용) | 없음 | **204 No Content** |
 | **PATCH** | `/books/{id}/cover` | O | AI 생성한 책 표지 이미지 반영 | `{ "coverImageUrl": "Base64 이미지 데이터" }` | **200 OK**<br>`{ "id": 1, "coverImageUrl": "...", ... }` |
 | **POST** | `/books/{id}/like` | O | 도서 추천 수(좋아요) 토글 | `{ "userId": "사용자ID" }` | **200 OK**<br>`{ "id": 1, "likeCount": 1, ... }` |
-| **GET** | `/books/ai-recommendation` | X | 이 달의 캐시된 AI 추천 배너 데이터 조회 | 없음 | **200 OK**<br>`{ "id": 1, "title": "도서명", "coverImageUrl": "...", "reason": "AI 추천이유" }` |
+| **GET** | `/books/ai-recommendation` | X | 이 달의 캐시된 AI 추천 배너 데이터 조회 (인기도서 기반 생성) | 없음 | **200 OK**<br>`{ "id": 1, "title": "도서명", "coverImageUrl": "...", "reason": "AI 추천이유" }` |
 
 ### 3. 댓글 API (`/books/{bookId}/comments`)
 | HTTP Method | Endpoint | 인증 필요 | 기능 설명 | Request Payload | Response Payload |
@@ -234,4 +251,4 @@ npm run dev
 * OpenAI DALL-E 모델을 기반으로 도서 제목/저자/본문을 분석한 세로 맞춤형 고화질 책 표지 이미지를 자동 드로잉하고, 이를 Base64 데이터로 받아 데이터베이스에 직접 연동 및 렌더링합니다.
 
 ### 5. 다이내믹 AI 추천 헤더 배너 (`Header`)
-* 5초 주기로 자동 슬라이딩되는 상단 롤링 배너를 제공하며, AI 큐레이션 엔진에 의해 캐싱된 추천 데이터가 있을 시 AI 추천 책 정보와 함께 감성적 큐레이션 사유(`reason`)를 홈 배너 영역에 실시간 연동합니다.
+* 5초 주기로 자동 슬라이딩되는 상단 롤링 배너를 제공하며, AI 큐레이션 엔진에 의해 캐싱된 추천 데이터가 있을 시 AI 추천 책 정보와 함께 감성적 큐레이션 사유(`reason`)를 홈 배너 영역에 실시간 연동합니다. (배너 추천 데이터는 인기도서 목록을 기반으로 추출됩니다.)

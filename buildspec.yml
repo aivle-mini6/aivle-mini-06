@@ -8,13 +8,21 @@ phases:
 
   pre_build:
     commands:
-      - cd frontend && npm install
-      - cd ../backend && chmod +x gradlew
+      - echo "=== directory check ==="
+      - ls -al
+      - ls -al frontend
+      - ls -al backend
+      - cd frontend
+      - npm install
+      - cd ../backend
+      - chmod +x gradlew
 
   build:
     commands:
-      - cd frontend && npm run build
-      - cd ../backend && ./gradlew clean build -x test
+      - cd $CODEBUILD_SRC_DIR/frontend
+      - npm run build
+      - cd $CODEBUILD_SRC_DIR/backend
+      - ./gradlew clean build -x test
 
 artifacts:
   files:

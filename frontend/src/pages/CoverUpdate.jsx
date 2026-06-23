@@ -1,6 +1,7 @@
 import { useState } from "react";
 import CoverPreview from "../components/CoverPreview";
 import CoverImageModal from "../components/CoverImageModal";
+import "../styles/CoverUpdate.css";
 
 function CoverUpdate({
   book,

@@ -8,15 +8,15 @@ phases:
 
   pre_build:
     commands:
-      - cd frontend && npm ci
+      - echo "=== directory check ==="
+      - ls -al
+      - ls -al frontend
+      - ls -al backend
+      - cd frontend
+      - npm install
+      - cd ../backend
+      - chmod +x gradlew
 
   build:
     commands:
-      - cd frontend && npm run build
-      - cd ../backend && chmod +x gradlew
-      - cd ../backend && ./gradlew clean build -x test
-
-artifacts:
-  files:
-    - backend/build/libs/*.jar
-    - frontend/dist/**/*
+      - ng test --no-watch --no-progress --browsers=ChromeHeadlessCI

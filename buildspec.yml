@@ -6,32 +6,31 @@ phases:
       java: corretto17
       nodejs: 20
     commands:
-      - echo "Install phase 시작"
+      - echo "Install phase"
 
   pre_build:
     commands:
-      - echo "프론트엔드 의존성(라이브러리) 설치 중..."
-      - cd $CODEBUILD_SRC_DIR/frontend
+      - echo "Installing frontend dependencies"
+      - cd frontend
       - npm ci
-      - echo "백엔드 gradlew 실행 권한 부여 중..."
-      - cd $CODEBUILD_SRC_DIR/backend
+      - cd ../backend
       - chmod +x gradlew
 
   build:
     commands:
-      - echo "프론트엔드(React Vite) 빌드 시작..."
-      - cd $CODEBUILD_SRC_DIR/frontend
+      - echo "Building frontend"
+      - cd ../frontend
       - npm run build
-      - echo "백엔드(Spring Boot) 빌드 시작..."
-      - cd $CODEBUILD_SRC_DIR/backend
+      - echo "Building backend"
+      - cd ../backend
       - ./gradlew clean build -x test
 
   post_build:
     commands:
-      - echo "모든 빌드가 성공적으로 완료되었습니다! S3 루트 경로로 배포를 시작합니다."
-      - aws s3 sync $CODEBUILD_SRC_DIR/frontend/dist s3://user34-prod-website --delete
+      - echo "Build completed"
 
 artifacts:
   files:
     - backend/build/libs/*.jar
+    - frontend/**/*
   discard-paths: no

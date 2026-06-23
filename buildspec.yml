@@ -5,32 +5,18 @@ phases:
     runtime-versions:
       java: corretto17
       nodejs: 20
-    commands:
-      - echo "Install phase"
 
   pre_build:
     commands:
-      - echo "Installing frontend dependencies"
-      - cd frontend
-      - npm ci
-      - cd ../backend
-      - chmod +x gradlew
+      - cd frontend && npm ci
 
   build:
     commands:
-      - echo "Building frontend"
-      - cd ../frontend
-      - npm run build
-      - echo "Building backend"
-      - cd ../backend
-      - ./gradlew clean build -x test
-
-  post_build:
-    commands:
-      - echo "Build completed"
+      - cd frontend && npm run build
+      - cd ../backend && chmod +x gradlew
+      - cd ../backend && ./gradlew clean build -x test
 
 artifacts:
   files:
     - backend/build/libs/*.jar
     - frontend/dist/**/*
-  discard-paths: no

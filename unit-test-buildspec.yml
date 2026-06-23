@@ -7,9 +7,10 @@ phases:
 
   pre_build:
     commands:
-      - npm --prefix frontend install
+      - cd frontend
+      - npm install
+      - npm install @angular/cli
 
   build:
     commands:
-      - cd frontend
-      - npx ng test --no-watch --no-progress --browsers=ChromeHeadlessCI
+      - npm run test -- --no-watch --no-progress --browsers=ChromeHeadlessCI

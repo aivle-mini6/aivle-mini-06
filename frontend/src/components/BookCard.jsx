@@ -1,4 +1,4 @@
-function BookCard({ book, onClick }) {
+unction BookCard({ book, onClick }) {
   const hasCoverImage = Boolean(book.coverImageUrl);
 
   return (

@@ -12,6 +12,7 @@ phases:
       - ls -al
       - ls -al frontend
       - ls -al backend
+
       - cd frontend
       - npm install
       - cd ../backend
@@ -19,12 +20,16 @@ phases:
 
   build:
     commands:
+      - echo "=== frontend build ==="
       - cd $CODEBUILD_SRC_DIR/frontend
       - npm run build
+
+      - echo "=== backend build ==="
       - cd $CODEBUILD_SRC_DIR/backend
       - ./gradlew clean build -x test
 
 artifacts:
+  base-directory: frontend/dist
   files:
-    - backend/build/libs/*.jar
-    - frontend/dist/**/*
+    - '**/*'
+    - ../../backend/build/libs/*.jar

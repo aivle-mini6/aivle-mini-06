@@ -33,4 +33,4 @@ artifacts:
   files:
     - '**/*'
     # - ../../backend/build/libs/*.jar
-  discard-paths: yes
+  discard-paths: no

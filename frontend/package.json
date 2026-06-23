@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "json-server --watch db.json --port 3000",
-    "test": "vitest"
+    "test": "vitest run"
   },
   "dependencies": {
     "json-server": "^0.17.4",

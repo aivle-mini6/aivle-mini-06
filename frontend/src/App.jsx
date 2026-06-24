@@ -710,7 +710,7 @@ function App() {
   const handleCommentSubmit = async (bookId, content) => {
     try {
       const authHeader = authToken?.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
-      const res = await fetch(`http://localhost:8080/books/${bookId}/comments`, {
+      const res = await fetch(`${API_URL}/${bookId}/comments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -735,7 +735,7 @@ function App() {
     if (!window.confirm("정말로 이 댓글을 삭제하시겠습니까?")) return;
     try {
       const authHeader = authToken?.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
-      const res = await fetch(`http://localhost:8080/books/${bookId}/comments/${commentId}`, {
+      const res = await fetch(`${API_URL}/${bookId}/comments/${commentId}`, {
         method: "DELETE",
         headers: { Authorization: authHeader },
       });
@@ -752,7 +752,7 @@ function App() {
   const handleCommentLike = async (bookId, commentId) => {
     try {
       const authHeader = authToken?.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
-      const res = await fetch(`http://localhost:8080/books/${bookId}/comments/${commentId}/like`, {
+      const res = await fetch(`${API_URL}/${bookId}/comments/${commentId}/like`, {
         method: "POST",
         headers: { Authorization: authHeader },
       });

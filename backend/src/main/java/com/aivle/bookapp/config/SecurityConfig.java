@@ -53,6 +53,8 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/books/*/comments").permitAll()
                         .requestMatchers(HttpMethod.POST, "/books/*/comments").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/*/comments").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/*/comments").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/books/*/comments/*").authenticated()
                         .requestMatchers(HttpMethod.POST, "/books/*/comments/*/like").authenticated()
                         .requestMatchers(HttpMethod.GET, "/books", "/books/**").permitAll()

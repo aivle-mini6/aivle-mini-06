@@ -697,7 +697,7 @@ function App() {
   const handleCommentSubmit = async (bookId, content) => {
     try {
       const authHeader = authToken?.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
-      const res = await fetch(`/api/${bookId}/comments`, {
+      const res = await fetch(`/api/books/${bookId}/comments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

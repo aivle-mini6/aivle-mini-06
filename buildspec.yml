@@ -32,5 +32,5 @@ phases:
 artifacts:
   files:
     - backend/build/libs/*.jar
-    - frontend/**/*
+    - frontend/dist/**/*
   discard-paths: no

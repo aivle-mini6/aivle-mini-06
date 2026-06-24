@@ -1,6 +1,7 @@
 import { useState } from "react";
 import CoverPreview from "../components/CoverPreview";
 import CoverImageModal from "../components/CoverImageModal";
+import "../styles/CoverUpdate.css";
 
 function CoverUpdate({
   book,
@@ -13,6 +14,8 @@ function CoverUpdate({
   const [quality, setQuality] = useState("medium");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCoverOpen, setIsCoverOpen] = useState(false);
+  const [generatedImages, setGeneratedImages] = useState([]);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
   const [draftCoverImage, setDraftCoverImage] = useState("");
   const previewImage = draftCoverImage || book?.coverImageUrl || "";
   const hasDraftCoverImage = Boolean(draftCoverImage);
@@ -36,15 +39,17 @@ function CoverUpdate({
     setIsGenerating(true);
 
     try {
-      const generatedImage = await onGenerateCover({
+      const images = await onGenerateCover({
         book,
         apiKey,
         model,
         quality,
       });
 
-      if (generatedImage) {
-        setDraftCoverImage(generatedImage);
+      if (images?.length) {
+        setGeneratedImages(images);
+        setSelectedImageIndex(null);
+        setDraftCoverImage("");
       }
     } catch (error) {
       console.error(error);
@@ -52,6 +57,11 @@ function CoverUpdate({
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleSelectGeneratedImage = (image, index) => {
+    setSelectedImageIndex(index);
+    setDraftCoverImage(image);
   };
 
   const handleLocalImageChange = async (e) => {
@@ -69,6 +79,7 @@ function CoverUpdate({
     const reader = new FileReader();
 
     reader.onload = async () => {
+      setSelectedImageIndex(null);
       setDraftCoverImage(reader.result);
     };
     reader.onerror = () => {
@@ -79,6 +90,7 @@ function CoverUpdate({
 
   const handleDeleteCoverImage = async () => {
     if (hasDraftCoverImage) {
+      setSelectedImageIndex(null);
       setDraftCoverImage("");
       return;
     }
@@ -98,12 +110,16 @@ function CoverUpdate({
     const savedBook = await onSaveCoverImage(book, draftCoverImage);
 
     if (savedBook) {
+      setGeneratedImages([]);
+      setSelectedImageIndex(null);
       setDraftCoverImage("");
       onMoveToDetail(savedBook);
     }
   };
 
   const handleCancelCoverImage = () => {
+    setGeneratedImages([]);
+    setSelectedImageIndex(null);
     setDraftCoverImage("");
     onMoveToDetail(book);
   };
@@ -112,71 +128,99 @@ function CoverUpdate({
     <>
       <main className="cover-page">
         <section className="cover-layout">
-          <div className="section-card cover-form-area">
-            <h2>도서 표지 생성</h2>
+          <div className="cover-left-column">
+            <div className="section-card cover-form-area">
+              <h2>도서 표지 생성</h2>
 
-            <div className="form-group">
-              <label>API Key *</label>
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="sk-proj-xxxxxxxxxxxxxxxx"
-                disabled={isGenerating}
-              />
-            </div>
+              <div className="form-group">
+                <label>API Key *</label>
+                <input
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="sk-proj-xxxxxxxxxxxxxxxx"
+                  disabled={isGenerating}
+                />
+              </div>
 
-            <div className="form-group">
-              <label>모델</label>
-              <select
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                disabled={isGenerating}
-              >
-                <option value="gpt-image-2">gpt-Image-2.0</option>
-                <option value="gpt-image-1.5">gpt-Image-1.5</option>
-              </select>
-            </div>
+              <div className="form-group">
+                <label>모델</label>
+                <select
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  disabled={isGenerating}
+                >
+                  <option value="gpt-image-2">gpt-Image-2.0</option>
+                  <option value="gpt-image-1.5">gpt-Image-1.5</option>
+                </select>
+              </div>
 
-            <div className="form-group">
-              <label>Quality</label>
-              <select
-                value={quality}
-                onChange={(e) => setQuality(e.target.value)}
-                disabled={isGenerating}
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </div>
+              <div className="form-group">
+                <label>Quality</label>
+                <select
+                  value={quality}
+                  onChange={(e) => setQuality(e.target.value)}
+                  disabled={isGenerating}
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
 
-            <div className="cover-buttons">
-              <button
-                type="button"
-                disabled={!apiKey.trim() || isGenerating}
-                onClick={handleGenerateCover}
-              >
-                {isGenerating ? "표지 생성중" : "AI 표지 생성"}
-              </button>
-
-              {!hasDraftCoverImage && (
-                <button type="button" onClick={() => onMoveToDetail(book)}>
-                  취소
+              <div className="cover-buttons">
+                <button
+                  type="button"
+                  disabled={!apiKey.trim() || isGenerating}
+                  onClick={handleGenerateCover}
+                >
+                  {isGenerating ? "표지 생성중" : "AI 표지 생성"}
                 </button>
+
+                {!hasDraftCoverImage && (
+                  <button type="button" onClick={() => onMoveToDetail(book)}>
+                    취소
+                  </button>
+                )}
+              </div>
+
+              {hasDraftCoverImage && (
+                <div className="cover-buttons">
+                  <button type="button" onClick={handleSaveCoverImage}>
+                    저장
+                  </button>
+
+                  <button type="button" onClick={handleCancelCoverImage}>
+                    취소
+                  </button>
+                </div>
               )}
             </div>
 
-            {hasDraftCoverImage && (
-              <div className="cover-buttons">
-                <button type="button" onClick={handleSaveCoverImage}>
-                  저장
-                </button>
+            {generatedImages.length > 0 && (
+              /* [추가] AI 표지 후보 선택 영역: cover-candidates-area*/
+              <section className="section-card cover-candidates-area">
+                <h3>생성된 표지 중 하나를 선택하세요</h3>
 
-                <button type="button" onClick={handleCancelCoverImage}>
-                  취소
-                </button>
-              </div>
+                {/* [추가] 표지 후보 배치 영역: cover-candidate-grid*/}
+                <div className="cover-candidate-grid">
+                  {/* [추가] 후보 카드와 선택 상태: cover-candidate, cover-candidate.is-selected*/}
+                  {generatedImages.map((image, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      className={`cover-candidate${
+                        selectedImageIndex === index ? " is-selected" : ""
+                      }`}
+                      onClick={() => handleSelectGeneratedImage(image, index)}
+                      aria-pressed={selectedImageIndex === index}
+                    >
+                      <img src={image} alt={`생성된 표지 후보 ${index + 1}`} />
+                      <span>후보 {index + 1}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
             )}
           </div>
 

@@ -1,0 +1,54 @@
+.cover-candidates-area {
+  width: 100%;
+  margin-top: 24px;
+  padding: 26px;
+  box-sizing: border-box;
+}
+
+.cover-candidates-area > h3 {
+  margin: 0 0 18px;
+  color: #14375c;
+  font-size: 20px;
+}
+
+.cover-candidate-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.cover-candidate {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  background: #f7fafc;
+  color: #14375c;
+  font: inherit;
+  cursor: pointer;
+}
+
+.cover-candidate img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.cover-candidate span {
+  padding: 2px 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.cover-candidate.is-selected {
+  border-color: #2f7f6f;
+  background: #eef8f5;
+  box-shadow: 0 0 0 3px rgba(47, 127, 111, 0.15);
+  transform: translateY(-3px);
+}

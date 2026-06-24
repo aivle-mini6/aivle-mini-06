@@ -8,6 +8,7 @@ import StartPage from "./pages/StartPage";
 import AuthPage from "./pages/AuthPage";
 import MyPage from "./pages/MyPage";
 import Header from "./components/Header";
+import compressCoverImage from "./utils/compressCoverImage";
 import {
   clearAuth,
   getMyPage,
@@ -20,59 +21,6 @@ import {
   updateMyProfile,
 } from "./api/authApi";
 const API_URL = import.meta.env.VITE_BOOK_API_URL || "http://localhost:8080/books";
-const MAX_COVER_UPLOAD_BYTES = 900 * 1024;
-
-const loadImage = (src) =>
-  new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("표지 이미지를 불러오지 못했습니다."));
-    image.src = src;
-  });
-
-const compressCoverImage = async (imageSrc) => {
-  if (
-    !imageSrc?.startsWith("data:image/") ||
-    new Blob([imageSrc]).size <= MAX_COVER_UPLOAD_BYTES
-  ) {
-    return imageSrc;
-  }
-
-  const image = await loadImage(imageSrc);
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
-
-  if (!context) {
-    throw new Error("표지 이미지를 압축하지 못했습니다.");
-  }
-
-  let scale = Math.min(1, 1200 / Math.max(image.naturalWidth, image.naturalHeight));
-  let quality = 0.85;
-
-  for (let attempt = 0; attempt < 10; attempt += 1) {
-    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-    const compressedImage = canvas.toDataURL("image/jpeg", quality);
-
-    if (new Blob([compressedImage]).size <= MAX_COVER_UPLOAD_BYTES) {
-      return compressedImage;
-    }
-
-    if (quality > 0.55) {
-      quality -= 0.1;
-    } else {
-      scale *= 0.8;
-    }
-  }
-
-  throw new Error("표지 이미지 용량을 900KB 이하로 줄이지 못했습니다.");
-};
-
 const normalizeBook = (book) => {
   if (!book) return book;
 
@@ -721,12 +669,6 @@ function App() {
       const body = JSON.stringify({
         coverImageUrl: uploadImageSrc,
       });
-
-      console.log(
-        "압축 후 실제 요청 크기:",
-        (new Blob([body]).size / 1024 / 1024).toFixed(2),
-        "MB",
-      );
 
       const res = await authFetch(`${API_URL}/${book.id}/cover`, {
         method: "PATCH",

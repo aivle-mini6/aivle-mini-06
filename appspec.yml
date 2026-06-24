@@ -6,6 +6,7 @@ files:
     destination: /usr/share/nginx/html
   - source: backend/build/libs/bookapp-0.0.1-SNAPSHOT.jar
     destination: /opt/aivle-mini-06/backend
+    file_exists_behavior: OVERWRITE
 
 permissions:
   - object: /usr/share/nginx/html

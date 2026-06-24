@@ -1678,3 +1678,11 @@ button.hero-banner {
     transform: translateY(0);
   }
 }
+
+.cover-left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+

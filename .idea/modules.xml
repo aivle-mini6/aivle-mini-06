@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/aivle-mini-06.iml" filepath="$PROJECT_DIR$/.idea/aivle-mini-06.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/bookapp.main.iml" filepath="$PROJECT_DIR$/.idea/modules/bookapp.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/miniproj6.iml" filepath="$PROJECT_DIR$/.idea/miniproj6.iml" />
     </modules>
   </component>
 </project>

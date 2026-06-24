@@ -198,7 +198,7 @@ function App() {
   const fetchComments = async (bookId, currentSort) => {
     if (!bookId) return;
     try {
-      const res = await fetch(`/api/books/${bookId}/comments?sort=${currentSort}`);
+      const res = await fetch(`${API_URL}/${bookId}/comments?sort=${currentSort}`);
       if (res.ok) {
         const data = await res.json();
         setComments(data);
@@ -591,39 +591,52 @@ function App() {
     - 글자는 너무 많이 넣지 않기
     `;
 
+    const styleVariants = [
+      "독창적이고 실험적인 구도",
+      "전통적이고 안정적인 구도",
+      "감각적이고 현대적인 구도",
+    ];
+
     try {
       setMessage("");
 
-      const res = await fetch(OPENAI_IMAGE_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: model,
-          prompt: prompt,
-          n: 1,
-          size: "1024x1536",
-          quality: quality,
-          output_format: "png",
+      const images = await Promise.all(
+        styleVariants.map(async (variant) => {
+          const variantPrompt = `${prompt}\n- 이미지 변형: ${variant}`;
+          const res = await fetch(OPENAI_IMAGE_API_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+              model: model,
+              prompt: variantPrompt,
+              n: 1,
+              size: "1024x1536",
+              quality: quality,
+              output_format: "png",
+            }),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.error?.message || "OpenAI 요청 실패");
+          }
+
+          const b64Json = data.data?.[0]?.b64_json;
+
+          if (!b64Json) {
+            throw new Error("이미지 데이터가 응답에 없습니다.");
+          }
+
+          return `data:image/png;base64,${b64Json}`;
         }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error?.message || "OpenAI 요청 실패");
-      }
-
-      const b64Json = data.data?.[0]?.b64_json;
-
-      if (!b64Json) {
-        throw new Error("이미지 데이터가 응답에 없습니다.");
-      }
+      );
 
       setMessage("");
-      return `data:image/png;base64,${b64Json}`;
+      return images;
     } catch (error) {
       console.error(error);
       setMessage(error.message || "표지 생성 중 오류가 발생했습니다.");
@@ -697,7 +710,7 @@ function App() {
   const handleCommentSubmit = async (bookId, content) => {
     try {
       const authHeader = authToken?.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
-      const res = await fetch(`/api/books/${bookId}/comments`, {
+      const res = await fetch(`http://localhost:8080/books/${bookId}/comments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -722,7 +735,7 @@ function App() {
     if (!window.confirm("정말로 이 댓글을 삭제하시겠습니까?")) return;
     try {
       const authHeader = authToken?.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
-      const res = await fetch(`/api/books/${bookId}/comments/${commentId}`, {
+      const res = await fetch(`http://localhost:8080/books/${bookId}/comments/${commentId}`, {
         method: "DELETE",
         headers: { Authorization: authHeader },
       });
@@ -739,7 +752,7 @@ function App() {
   const handleCommentLike = async (bookId, commentId) => {
     try {
       const authHeader = authToken?.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
-      const res = await fetch(`/api/books/${bookId}/comments/${commentId}/like`, {
+      const res = await fetch(`http://localhost:8080/books/${bookId}/comments/${commentId}/like`, {
         method: "POST",
         headers: { Authorization: authHeader },
       });
@@ -851,7 +864,6 @@ function App() {
           onLikeBook={handleLikeBook}
           currentUser={currentUser}
           isLiked={selectedBook ? likedBookIds.has(String(selectedBook.id)) : false}
-
           comments={comments}
           sortBy={sortBy}
           onSortChange={setSortBy}

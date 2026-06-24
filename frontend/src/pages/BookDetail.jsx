@@ -11,7 +11,6 @@ function BookDetail({
   onLikeBook,
   currentUser,
   isLiked = false,
-
   comments,
   sortBy,
   onSortChange,
@@ -30,7 +29,7 @@ function BookDetail({
 
   useEffect(() => {
     if (book?.id) {
-      onCommentFetch(book.id, sortBy);
+      onCommentFetch(book.id);
     }
   }, [book?.id, sortBy]);
 

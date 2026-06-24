@@ -7,12 +7,21 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://database-1.ceq2mnp4ry1v.us-east-2.rds.amazonaws.com:3306/bookdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+<<<<<<< HEAD
     username: sa
     password: 1234
   h2:
     console:
       enabled: true
       path: /h2-console
+=======
+    username: admin
+    password: 12345678
+  # h2:
+  #   console:
+  #     enabled: true
+  #     path: /h2-console
+>>>>>>> c32c573de7096f08b1e3cf7f9e965331adb6ffd2
   jpa:
     hibernate:
       ddl-auto: update

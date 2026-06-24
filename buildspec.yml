@@ -33,10 +33,6 @@ artifacts:
   files:
     - backend/build/libs/*.jar
     - frontend/dist/**/*
-<<<<<<< HEAD
     - appspec.yml
     - 'deploy-scripts/**/*'
   discard-paths: no
-=======
-  discard-paths: no
->>>>>>> c32c573de7096f08b1e3cf7f9e965331adb6ffd2

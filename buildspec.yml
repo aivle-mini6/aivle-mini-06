@@ -29,8 +29,9 @@ phases:
       - ./gradlew clean build -x test
 
 artifacts:
-  base-directory: frontend/dist
   files:
-    - '**/*'
-    - ../../backend/build/libs/*.jar
+    - appspec.yml
+    - deploy-scripts/**/*
+    - frontend/dist/**/*
+    - backend/build/libs/*.jar
   discard-paths: no

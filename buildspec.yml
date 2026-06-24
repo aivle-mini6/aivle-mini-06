@@ -32,7 +32,7 @@ phases:
 
 artifacts:
   files:
-    - 'frontend/dist/my-angular-project/**/*'
+    - '/dist/my-angular-project/**/*'
     - appspec.yml
     - '/deploy-scripts/**/*'
     - backend/build/libs/*.jar

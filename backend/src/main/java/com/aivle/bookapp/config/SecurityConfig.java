@@ -51,15 +51,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/users/register", "/users/login", "/users/refresh").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/**/comments").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/**/comments").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/**/comments/*").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/**/comments/*/like").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/*/comments", "/**/comments").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/*/comments", "/**/comments").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/*/comments/*", "/**/comments/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/*/comments/*/like", "/**/comments/**/like").authenticated()
+                        
                         .requestMatchers(HttpMethod.GET, "/books", "/books/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/books").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/books/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/books").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/books").permitAll() // 책 등록을 누구나 가능하게 하려면 permitAll
                         .requestMatchers(HttpMethod.PATCH, "/books/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/books/**").authenticated()
                         .anyRequest().authenticated()
                 )
 

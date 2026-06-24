@@ -1,9 +1,9 @@
 const AUTH_API_URL =
-  import.meta.env.VITE_AUTH_API_URL || "http://localhost:8080/users";
- 
+  import.meta.env.VITE_AUTH_API_URL || "/api/users";
+
 const AUTH_STORAGE_KEY = "aivlebooks_auth";
 const USE_MOCK_AUTH = import.meta.env.VITE_USE_MOCK_AUTH === "true";
- 
+
 const createMockAuth = ({ userId, name, email, nickname }) => ({
   accessToken: `mock-token-${userId}`,
   refreshToken: `mock-refresh-token-${userId}`,
@@ -14,11 +14,11 @@ const createMockAuth = ({ userId, name, email, nickname }) => ({
     nickname: nickname || name || userId,
   },
 });
- 
+
 const normalizeAuthResponse = (data, fallbackUserId) => {
   const payload = data?.data || data || {};
   const user = payload.user || payload.member || payload;
- 
+
   return {
     accessToken: payload.accessToken || payload.token || "",
     refreshToken: payload.refreshToken || "",
@@ -33,7 +33,7 @@ const normalizeAuthResponse = (data, fallbackUserId) => {
     },
   };
 };
- 
+
 const requestAuth = async (path, body, fallbackFactory) => {
   try {
     const response = await fetch(`${AUTH_API_URL}${path}`, {
@@ -43,31 +43,31 @@ const requestAuth = async (path, body, fallbackFactory) => {
       },
       body: JSON.stringify(body),
     });
- 
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       throw new Error(errorData?.message || "인증 요청에 실패했습니다.");
     }
- 
+
     const data = await response.json();
     return normalizeAuthResponse(data, body.userId || body.loginId);
   } catch (error) {
     if (!USE_MOCK_AUTH) {
       throw error;
     }
- 
+
     return fallbackFactory();
   }
 };
- 
+
 export const login = ({ userId, password }) => {
   if (!userId?.trim() || !password?.trim()) {
     throw new Error("아이디와 비밀번호를 입력해주세요.");
   }
- 
+
   return requestAuth("/login", { userId, password }, () => createMockAuth({ userId }));
 };
- 
+
 export const signup = ({ userId, password, name, email, nickname }) => {
   if (
     !userId?.trim() ||
@@ -78,7 +78,7 @@ export const signup = ({ userId, password, name, email, nickname }) => {
   ) {
     throw new Error("아이디, 비밀번호, 닉네임, 이름, 이메일을 입력해주세요.");
   }
- 
+
   const signupBody = {
     userId,
     password,
@@ -86,7 +86,7 @@ export const signup = ({ userId, password, name, email, nickname }) => {
     email,
     nickname,
   };
- 
+
   return requestAuth("/register", signupBody, () =>
     createMockAuth({ userId, name, email, nickname }),
   ).then(() => login({ userId, password }));
@@ -124,11 +124,11 @@ export const logout = async (authFetch) => {
     throw new Error(errorData?.message || "로그아웃 요청에 실패했습니다.");
   }
 };
- 
+
 export const saveAuth = (auth) => {
   window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth));
 };
- 
+
 export const getStoredAuth = () => {
   try {
     const savedAuth = window.localStorage.getItem(AUTH_STORAGE_KEY);
@@ -137,7 +137,7 @@ export const getStoredAuth = () => {
     return null;
   }
 };
- 
+
 export const clearAuth = () => {
   window.localStorage.removeItem(AUTH_STORAGE_KEY);
 };

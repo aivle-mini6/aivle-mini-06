@@ -864,7 +864,6 @@ function App() {
           onLikeBook={handleLikeBook}
           currentUser={currentUser}
           isLiked={selectedBook ? likedBookIds.has(String(selectedBook.id)) : false}
-
           comments={comments}
           sortBy={sortBy}
           onSortChange={setSortBy}

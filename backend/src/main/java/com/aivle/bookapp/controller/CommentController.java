@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/books/{bookId}/comments")
+@RequestMapping("/{bookId}/comments")
 @RequiredArgsConstructor
 public class CommentController {
 

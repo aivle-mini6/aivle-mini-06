@@ -5,7 +5,6 @@ import com.aivle.bookapp.dto.request.BookCreateRequest;
 import com.aivle.bookapp.dto.request.BookUpdateRequest;
 import com.aivle.bookapp.dto.request.CoverImageRequest;
 import com.aivle.bookapp.dto.request.LikeRequest;
-import com.aivle.bookapp.dto.response.BookPageResponse;
 import com.aivle.bookapp.dto.response.BookResponse;
 import com.aivle.bookapp.service.AiRecommendationService;
 import com.aivle.bookapp.service.CommentService;
@@ -13,7 +12,6 @@ import com.aivle.bookapp.service.BookService;
 import com.aivle.bookapp.util.JwtUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -34,30 +32,13 @@ public class BookController {
 
     // 교안 p.157: GET /books - 목록 조회
     @GetMapping
-    public BookPageResponse getAll(
-            @RequestParam(defaultValue = "all") String searchType,
-            @RequestParam(defaultValue = "") String keyWord,
-            @RequestParam(defaultValue = "time") String sortBy,
-            @RequestParam(defaultValue = "desc") String order,
-            @RequestParam(defaultValue = "1") int page
-    ) {
-        Page<Book> bookPage;
-        if(keyWord.isBlank())
-            bookPage = bookService.findAll(page);
-        else{
-            bookPage = bookService.search(searchType, keyWord, sortBy, order, page);
-        }
+    public List<BookResponse> getAll() {
+        return toResponseList(bookService.findAll());
+    }
 
-        if(bookPage.getTotalPages()<page)
-            page = bookPage.getTotalPages();
-
-        List<BookResponse> responseList = toResponseList(bookPage.getContent());
-
-        return BookPageResponse.builder()
-                .content(responseList)
-                .totalPages(bookPage.getTotalPages())
-                .currentPage(page)
-                .build();
+    @GetMapping("/liked")
+    public List<Long> getLikedBookIds(@AuthenticationPrincipal String loginUserId) {
+        return bookService.findLikedBookIds(loginUserId);
     }
 
     // 교안 p.158: GET /books/{id} - 상세 조회

@@ -59,26 +59,6 @@ const normalizeBooks = (data) => {
   return sortBooksOldestFirst(books.map(normalizeBook));
 };
 
-const getUserKey = (user) =>
-  user?.userId || user?.loginId || user?.id || user?.nickname || "";
-
-const getLikedStorageKey = (userKey) => `aivle-liked-books:${userKey}`;
-
-const loadLikedBookIds = (userKey) => {
-  if (!userKey) return new Set();
-
-  try {
-    const storedValue = localStorage.getItem(getLikedStorageKey(userKey));
-    const storedIds = JSON.parse(storedValue || "[]");
-
-    if (!Array.isArray(storedIds)) return new Set();
-
-    return new Set(storedIds.map(String));
-  } catch {
-    return new Set();
-  }
-};
-
 function App() {
   const [page, setPage] = useState("start");
   const [books, setBooks] = useState([]);
@@ -88,14 +68,12 @@ function App() {
   const [listPage, setListPage] = useState(1);
   const [message, setMessage] = useState("");
   const [messageKey, setMessageKey] = useState(0);
+  const [isRefreshingBooks, setIsRefreshingBooks] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState([]);
   const [auth, setAuth] = useState(() => getStoredAuth());
-  const [likedBookIds, setLikedBookIds] = useState(() =>
-    loadLikedBookIds(getUserKey(getStoredAuth()?.user)),
-  );
+  const [likedBookIds, setLikedBookIds] = useState(() => new Set());
 
   const currentUser = auth?.user || null;
-  const currentUserKey = getUserKey(currentUser);
   const authToken = auth?.accessToken || "";
 
   const [comments, setComments] = useState([]);
@@ -189,13 +167,14 @@ function App() {
 
       setBooks(nextBooks);
       setSelectedId((prevId) => prevId ?? nextBooks[0]?.id ?? null);
+      return true;
     } catch (error) {
       console.error(error);
       setMessage("백엔드 서버 연결 상태를 확인해주세요.");
     }
   }, []);
 
-  const fetchComments = async (bookId, currentSort) => {
+  const fetchComments = useCallback(async (bookId, currentSort = sortBy) => {
     if (!bookId) return;
     try {
       const res = await fetch(`${API_URL}/${bookId}/comments?sort=${currentSort}`);
@@ -206,7 +185,7 @@ function App() {
     } catch (error) {
       console.error("댓글 조회 오류:", error);
     }
-  };
+  }, [sortBy]);
 
   const fetchAIRecommendations = async () => {
     try {
@@ -244,15 +223,6 @@ function App() {
   }, [loadBooks]);
 
   useEffect(() => {
-    if (!currentUserKey) return;
-
-    localStorage.setItem(
-      getLikedStorageKey(currentUserKey),
-      JSON.stringify([...likedBookIds]),
-    );
-  }, [currentUserKey, likedBookIds]);
-
-  useEffect(() => {
     if (!message) return undefined;
 
     const timerId = window.setTimeout(() => {
@@ -262,10 +232,22 @@ function App() {
     return () => window.clearTimeout(timerId);
   }, [message, messageKey]);
 
-  const showToast = (text) => {
+  const showToast = useCallback((text) => {
     setMessageKey((prevKey) => prevKey + 1);
     setMessage(text);
-  };
+  }, []);
+
+  const handleRefreshBooks = useCallback(async () => {
+    if (isRefreshingBooks) return;
+
+    setIsRefreshingBooks(true);
+    const isSuccess = await loadBooks();
+    setIsRefreshingBooks(false);
+
+    if (isSuccess) {
+      showToast("도서 목록을 최신화했습니다.");
+    }
+  }, [isRefreshingBooks, loadBooks, showToast]);
 
   const authFetch = useCallback(
     async (url, options = {}) => {
@@ -308,6 +290,38 @@ function App() {
     },
     [auth],
   );
+
+  useEffect(() => {
+    if (!currentUser) return undefined;
+
+    let isCanceled = false;
+
+    const syncLikedBookIds = async () => {
+      try {
+        const res = await authFetch(`${API_URL}/liked`);
+
+        if (!res.ok) {
+          throw new Error("좋아요 목록을 불러오지 못했습니다.");
+        }
+
+        const likedIds = await res.json();
+
+        if (!isCanceled && Array.isArray(likedIds)) {
+          setLikedBookIds(new Set(likedIds.map(String)));
+        }
+      } catch (error) {
+        if (!isCanceled) {
+          console.error("좋아요 목록 동기화 실패:", error);
+        }
+      }
+    };
+
+    syncLikedBookIds();
+
+    return () => {
+      isCanceled = true;
+    };
+  }, [authFetch, currentUser]);
 
   const moveToStart = () => {
     setSearch("");
@@ -365,7 +379,7 @@ function App() {
 
     saveAuth(nextAuth);
     setAuth(nextAuth);
-    setLikedBookIds(loadLikedBookIds(getUserKey(nextAuth.user)));
+    setLikedBookIds(new Set());
     setMessage("로그인되었습니다.");
     setPage("start");
   };
@@ -375,7 +389,7 @@ function App() {
 
     saveAuth(nextAuth);
     setAuth(nextAuth);
-    setLikedBookIds(loadLikedBookIds(getUserKey(nextAuth.user)));
+    setLikedBookIds(new Set());
     setMessage("회원가입이 완료되었습니다.");
     setPage("start");
   };
@@ -499,7 +513,7 @@ function App() {
     }
 
     const bookId = String(book.id);
-    const wasLiked = likedBookIds.has(bookId);
+    const previousLikeCount = book.likeCount || 0;
 
     try {
       const res = await authFetch(`${API_URL}/${book.id}/like`, {
@@ -517,6 +531,8 @@ function App() {
       }
 
       const data = normalizeBook(await res.json());
+      const nextLikeCount = data.likeCount || 0;
+      const isLikedNow = nextLikeCount > previousLikeCount;
 
       setBooks((prevBooks) =>
         prevBooks.map((item) => (item.id === data.id ? data : item)),
@@ -525,17 +541,17 @@ function App() {
       setLikedBookIds((prevIds) => {
         const nextIds = new Set(prevIds);
 
-        if (wasLiked) {
-          nextIds.delete(bookId);
-        } else {
+        if (isLikedNow) {
           nextIds.add(bookId);
+        } else {
+          nextIds.delete(bookId);
         }
 
         return nextIds;
       });
 
       showToast(
-        wasLiked
+        !isLikedNow
           ? `${data.title} 추천이 취소되었습니다.`
           : `${data.title} 도서를 추천했습니다.`,
       );
@@ -835,6 +851,8 @@ function App() {
           onMoveToList={moveToList}
           onMoveToDetail={moveToDetail}
           onMoveToCreate={moveToCreate}
+          onRefreshBooks={handleRefreshBooks}
+          isRefreshingBooks={isRefreshingBooks}
         />
       )}
 
@@ -853,6 +871,8 @@ function App() {
           onPageChange={setListPage}
           onMoveToDetail={moveToDetail}
           onMoveToCreate={moveToCreate}
+          onRefreshBooks={handleRefreshBooks}
+          isRefreshingBooks={isRefreshingBooks}
         />
       )}
 

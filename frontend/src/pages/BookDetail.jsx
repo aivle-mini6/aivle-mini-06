@@ -29,9 +29,9 @@ function BookDetail({
 
   useEffect(() => {
     if (book?.id) {
-      onCommentFetch(book.id);
+      onCommentFetch(book.id, sortBy);
     }
-  }, [book?.id, sortBy]);
+  }, [book?.id, onCommentFetch, sortBy]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
